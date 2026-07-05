@@ -3,6 +3,21 @@ default_install_hook_types:
   - commit-msg
 
 repos:
+  - repo: local
+    hooks:
+      - id: validate-tracked-packages
+        name: validate tracked packages config
+        entry: ruby -e 'require "yaml"; ARGV.each { |path| YAML.load_file(path) }'
+        language: system
+        files: ^config/tracked-packages\.yml$
+
+      - id: validate-tracked-versions-script
+        name: validate tracked versions script
+        entry: ruby -c script/tracked-versions
+        language: system
+        pass_filenames: false
+        files: ^script/tracked-versions$
+
   - repo: https://github.com/compilerla/conventional-pre-commit
     rev: v4.4.0
     hooks:

@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+tap="${HOMEBREW_TAP:-po-sen/tap}"
+
+if [ "$#" -gt 0 ]; then
+  exec brew livecheck "$@"
+fi
+
+exec brew livecheck --tap="$tap"

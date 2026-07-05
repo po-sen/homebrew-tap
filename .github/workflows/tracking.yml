@@ -1,0 +1,34 @@
+name: track upstream versions
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Monday 05:00 Asia/Taipei.
+    - cron: "0 21 * * 0"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  upstream-versions:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out tap
+        uses: actions/checkout@v4
+
+      - name: Show tracked upstream versions
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: script/tracked-versions --limit 20
+
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Run Homebrew livecheck
+        env:
+          HOMEBREW_TAP: po-sen/tap
+        run: script/livecheck

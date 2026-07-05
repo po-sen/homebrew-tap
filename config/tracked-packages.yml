@@ -1,0 +1,39 @@
+schema_version: 1
+tap: po-sen/tap
+
+defaults:
+  version_source: github_tags
+  release_policy: stable_semver_tags
+  formula_policy: primary_plus_pinned
+
+packages:
+  asdf:
+    display_name: asdf
+    homepage: https://asdf-vm.com/
+    upstream:
+      github: asdf-vm/asdf
+      tag_pattern: '^v?(?<version>\d+\.\d+\.\d+)$'
+    formulae:
+      primary: asdf
+      pinned:
+        - asdf@0.17.0
+    policy:
+      track_upstream_versions: all
+      notes:
+        - Keep the unversioned formula aligned with the default version that should be installed by `brew install asdf`.
+        - Keep versioned formulae only for versions that must remain directly installable.
+
+  neovim:
+    display_name: Neovim
+    homepage: https://neovim.io/
+    upstream:
+      github: neovim/neovim
+      tag_pattern: '^v?(?<version>\d+\.\d+\.\d+)$'
+    formulae:
+      primary: neovim
+      pinned: []
+    policy:
+      track_upstream_versions: all
+      notes:
+        - Neovim formula updates must also review bundled tree-sitter parser resources.
+        - Add versioned formulae only for compatibility-critical versions.

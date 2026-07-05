@@ -1,0 +1,119 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "json"
+require "net/http"
+require "optparse"
+require "rubygems"
+require "timeout"
+require "yaml"
+
+ROOT = File.expand_path("..", __dir__)
+CONFIG_PATH = File.join(ROOT, "config", "tracked-packages.yml")
+
+options = {
+  all: false,
+  limit: 10,
+}
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: script/tracked-versions [options] [package ...]"
+
+  opts.on("--all", "Print every matching upstream version") do
+    options[:all] = true
+  end
+
+  opts.on("--limit N", Integer, "Number of recent versions to print per package") do |value|
+    options[:limit] = value
+  end
+end
+
+parser.parse!
+
+def fetch_github_tags(repo)
+  owner, name = repo.split("/", 2)
+  abort "Invalid GitHub repo: #{repo}" unless owner && name
+
+  tags = []
+  page = 1
+
+  loop do
+    uri = URI("https://api.github.com/repos/#{owner}/#{name}/tags?per_page=100&page=#{page}")
+    request = Net::HTTP::Get.new(uri)
+    request["Accept"] = "application/vnd.github+json"
+    request["User-Agent"] = "po-sen-homebrew-tap-version-tracker"
+    token = ENV["GITHUB_TOKEN"]
+    request["Authorization"] = "Bearer #{token}" unless token.nil? || token.empty?
+
+    response = begin
+      Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
+        http.request(request)
+      end
+    rescue SocketError, SystemCallError, Timeout::Error => e
+      abort "Unable to reach GitHub API for #{repo}: #{e.message}"
+    end
+
+    unless response.is_a?(Net::HTTPSuccess)
+      abort "GitHub API request failed for #{repo}: #{response.code} #{response.message}"
+    end
+
+    body = JSON.parse(response.body)
+    break if body.empty?
+
+    tags.concat(body.map { |tag| tag.fetch("name") })
+    break if body.length < 100
+
+    page += 1
+  end
+
+  tags
+end
+
+def matching_versions(tags, pattern)
+  regex = Regexp.new(pattern)
+
+  versions = tags.each_with_object([]) do |tag, result|
+    match = regex.match(tag)
+    next unless match
+
+    result << if match.names.include?("version")
+                match[:version]
+              else
+                match[1] || match[0].sub(/\Av/, "")
+              end
+  end
+
+  versions.uniq.sort_by { |version| Gem::Version.new(version) }.reverse
+end
+
+config = YAML.load_file(CONFIG_PATH)
+packages = config.fetch("packages")
+selected_packages = ARGV.empty? ? packages.keys : ARGV
+
+unknown_packages = selected_packages - packages.keys
+abort "Unknown package(s): #{unknown_packages.join(", ")}" unless unknown_packages.empty?
+
+selected_packages.each_with_index do |package_name, index|
+  package = packages.fetch(package_name)
+  upstream = package.fetch("upstream")
+  formulae = package.fetch("formulae")
+  versions = matching_versions(
+    fetch_github_tags(upstream.fetch("github")),
+    upstream.fetch("tag_pattern"),
+  )
+
+  puts if index.positive?
+  puts "#{package_name}:"
+  puts "  upstream: #{upstream.fetch("github")}"
+  puts "  latest: #{versions.first || "none"}"
+  puts "  matching_versions: #{versions.length}"
+  puts "  primary_formula: #{formulae.fetch("primary")}"
+
+  pinned = formulae.fetch("pinned", [])
+  puts "  pinned_formulae: #{pinned.empty? ? "none" : pinned.join(", ")}"
+
+  versions_to_print = options[:all] ? versions : versions.first(options[:limit])
+  label = options[:all] ? "versions" : "recent_versions"
+  puts "  #{label}:"
+  versions_to_print.each { |version| puts "    - #{version}" }
+end
