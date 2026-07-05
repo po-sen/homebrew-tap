@@ -1,15 +1,9 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require "json"
-require "net/http"
 require "optparse"
-require "rubygems"
-require "timeout"
-require "yaml"
 
-ROOT = File.expand_path("..", __dir__).freeze
-CONFIG_PATH = File.join(ROOT, "config", "tracked-packages.yml").freeze
+require_relative "../lib/version_tracker"
 
 options = {
   all:   false,
@@ -30,83 +24,14 @@ end
 
 parser.parse!
 
-def present_string?(value)
-  value.is_a?(String) && !value.empty?
-end
-
-def fetch_github_tags(repo)
-  owner, name = repo.split("/", 2)
-  abort "Invalid GitHub repo: #{repo}" if !present_string?(owner) || !present_string?(name)
-
-  tags = []
-  page = 1
-
-  loop do
-    uri = URI("https://api.github.com/repos/#{owner}/#{name}/tags?per_page=100&page=#{page}")
-    request = Net::HTTP::Get.new(uri)
-    request["Accept"] = "application/vnd.github+json"
-    request["User-Agent"] = "po-sen-homebrew-tap-version-tracker"
-    token = ENV.fetch("GITHUB_TOKEN", nil)
-    request["Authorization"] = "Bearer #{token}" if present_string?(token)
-
-    response = begin
-      Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
-        http.request(request)
-      end
-    rescue SocketError, SystemCallError, Timeout::Error => e
-      abort "Unable to reach GitHub API for #{repo}: #{e.message}"
-    end
-
-    unless response.is_a?(Net::HTTPSuccess)
-      abort "GitHub API request failed for #{repo}: #{response.code} #{response.message}"
-    end
-
-    body = JSON.parse(response.body)
-    break if body.empty?
-
-    tags.concat(body.map { |tag| tag.fetch("name") })
-    break if body.length < 100
-
-    page += 1
-  end
-
-  tags
-end
-
-def matching_versions(tags, pattern)
-  regex = Regexp.new(pattern)
-
-  versions = tags.each_with_object([]) do |tag, result|
-    match = regex.match(tag)
-    next unless match
-
-    version = if match.names.include?("version")
-      match[:version]
-    else
-      match[1] || match[0].delete_prefix("v")
-    end
-
-    result << version
-  end
-
-  versions.uniq.sort_by { |version| Gem::Version.new(version) }.reverse
-end
-
-config = YAML.load_file(CONFIG_PATH)
-packages = config.fetch("packages")
-selected_packages = ARGV.empty? ? packages.keys : ARGV
-
-unknown_packages = selected_packages - packages.keys
-abort "Unknown package(s): #{unknown_packages.join(", ")}" unless unknown_packages.empty?
+packages = VersionTracker.packages
+selected_packages = VersionTracker.resolve_package_names(ARGV)
 
 selected_packages.each_with_index do |package_name, index|
   package = packages.fetch(package_name)
   upstream = package.fetch("upstream")
   formulae = package.fetch("formulae")
-  versions = matching_versions(
-    fetch_github_tags(upstream.fetch("github")),
-    upstream.fetch("tag_pattern"),
-  )
+  versions = VersionTracker.versions_for(package)
 
   puts if index.positive?
   puts "#{package_name}:"

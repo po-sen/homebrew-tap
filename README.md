@@ -23,7 +23,8 @@ brew "<formula>"
 
 ## Tracked projects
 
-Tracked package metadata is defined in `config/tracked-packages.yml`.
+Tracked package metadata is defined in `config/tracked-packages.yml`. The full
+upstream version catalog is stored in `data/upstream-versions.yml`.
 
 See `docs/tracked-projects.md` for the package list, tracking model, and update
 workflow.
@@ -32,6 +33,7 @@ Useful maintenance commands:
 
 ```sh
 script/tracked-versions
+script/update-version-catalog
 script/livecheck
 script/check
 ```

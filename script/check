@@ -6,8 +6,10 @@ cleanup() {
 }
 trap cleanup EXIT
 
-ruby -e 'require "yaml"; YAML.load_file("config/tracked-packages.yml")'
+ruby -e 'require "yaml"; %w[config/tracked-packages.yml data/upstream-versions.yml].each { |path| YAML.load_file(path) if File.exist?(path) }'
+ruby -c lib/version_tracker.rb
 ruby -c script/tracked-versions
+ruby -c script/update-version-catalog
 
 if command -v pre-commit >/dev/null 2>&1; then
   pre-commit run --all-files

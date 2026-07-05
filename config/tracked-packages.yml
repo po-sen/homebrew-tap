@@ -1,5 +1,6 @@
 schema_version: 1
 tap: po-sen/tap
+version_catalog: data/upstream-versions.yml
 
 defaults:
   version_source: github_tags

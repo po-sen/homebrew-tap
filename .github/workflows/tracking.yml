@@ -25,6 +25,11 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: script/tracked-versions --limit 20
 
+      - name: Check upstream version catalog
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: script/update-version-catalog --check
+
       - name: Set up Homebrew
         uses: Homebrew/actions/setup-homebrew@main
 

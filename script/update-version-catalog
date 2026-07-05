@@ -1,0 +1,41 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "fileutils"
+require "optparse"
+
+require_relative "../lib/version_tracker"
+
+options = {
+  check: false,
+}
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: script/update-version-catalog [options]"
+
+  opts.on("--check", "Fail if data/upstream-versions.yml is out of date") do
+    options[:check] = true
+  end
+end
+
+parser.parse!
+
+abort "Unexpected package arguments: #{ARGV.join(", ")}" unless ARGV.empty?
+
+expected_catalog = VersionTracker.catalog_yaml
+catalog_path = VersionTracker::CATALOG_PATH
+
+if options[:check]
+  actual_catalog = File.exist?(catalog_path) ? File.read(catalog_path) : nil
+
+  if actual_catalog == expected_catalog
+    puts "#{catalog_path} is up to date"
+    exit 0
+  end
+
+  abort "#{catalog_path} is out of date. Run `script/update-version-catalog`."
+end
+
+FileUtils.mkdir_p(File.dirname(catalog_path))
+File.write(catalog_path, expected_catalog)
+puts "Wrote #{catalog_path}"
