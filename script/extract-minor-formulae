@@ -9,7 +9,7 @@ require_relative "../lib/version_tracker"
 
 options = {
   allow_missing: false,
-  force: false,
+  force:         false,
 }
 
 parser = OptionParser.new do |opts|
@@ -30,7 +30,7 @@ def run_command(*command, allow_failure: false)
   output, status = Open3.capture2e(*command)
   puts output unless output.empty?
   return output if status.success?
-  return nil if allow_failure
+  return if allow_failure
 
   abort "Command failed: #{command.join(" ")}"
 end
@@ -76,7 +76,16 @@ def print_missing(missing_versions)
   missing_versions.each { |formula| warn "  - #{formula}" }
 end
 
-def run_extract(package_name, formula_name, version, tap, options, tap_formula_dir, workspace_formula_dir, missing_versions)
+def run_extract(
+  package_name,
+  formula_name,
+  version,
+  tap,
+  options,
+  tap_formula_dir,
+  workspace_formula_dir,
+  missing_versions
+)
   filename = formula_filename(formula_name, version)
   target = formula_target(workspace_formula_dir, filename)
 
@@ -131,7 +140,15 @@ def process_package(package_name, package, tap, options, tap_formula_dir, worksp
   end
 end
 
-def process_packages(selected_packages, packages, tap, options, tap_formula_dir, workspace_formula_dir, missing_versions)
+def process_packages(
+  selected_packages,
+  packages,
+  tap,
+  options,
+  tap_formula_dir,
+  workspace_formula_dir,
+  missing_versions
+)
   selected_packages.each do |package_name|
     process_package(
       package_name,
@@ -152,7 +169,15 @@ end
 
 def extract_minor_formulae(selected_packages, packages, tap, options, tap_formula_dir, workspace_formula_dir)
   missing_versions = []
-  process_packages(selected_packages, packages, tap, options, tap_formula_dir, workspace_formula_dir, missing_versions)
+  process_packages(
+    selected_packages,
+    packages,
+    tap,
+    options,
+    tap_formula_dir,
+    workspace_formula_dir,
+    missing_versions,
+  )
   finalize(missing_versions, options)
 end
 
@@ -178,7 +203,14 @@ def run(options)
   tap = VersionTracker.load_config.fetch("tap")
 
   ensure_formula_dir
-  extract_minor_formulae(selected_packages, packages, tap, options, tap_formula_dir(tap), workspace_formula_dir)
+  extract_minor_formulae(
+    selected_packages,
+    packages,
+    tap,
+    options,
+    tap_formula_dir(tap),
+    workspace_formula_dir,
+  )
 end
 
 run(options)

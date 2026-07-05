@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require "set"
 require "yaml"
 
 require_relative "../lib/version_tracker"
@@ -9,8 +8,8 @@ require_relative "../lib/version_tracker"
 catalog = YAML.load_file(VersionTracker::CATALOG_PATH)
 formula_dir = File.join(VersionTracker::ROOT, "Formula")
 
-expected_formulae = Set.new
-tracked_formulae = Set.new
+expected_formulae = []
+tracked_formulae = []
 
 catalog.fetch("packages").each_value do |package|
   formula_name = package.fetch("primary_formula")
@@ -21,14 +20,14 @@ catalog.fetch("packages").each_value do |package|
   end
 end
 
-actual_formulae = tracked_formulae.each_with_object(Set.new) do |formula_name, result|
+actual_formulae = tracked_formulae.uniq.each_with_object([]) do |formula_name, result|
   Dir[File.join(formula_dir, "#{formula_name}@*.rb")].each do |path|
     result << File.basename(path, ".rb")
   end
 end
 
-missing_formulae = expected_formulae - actual_formulae
-unexpected_formulae = actual_formulae - expected_formulae
+missing_formulae = expected_formulae.uniq - actual_formulae.uniq
+unexpected_formulae = actual_formulae.uniq - expected_formulae.uniq
 
 if missing_formulae.empty? && unexpected_formulae.empty?
   puts "Versioned formulae match catalog minor-latest versions"
