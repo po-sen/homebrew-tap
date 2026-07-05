@@ -37,9 +37,9 @@ jobs:
 
       - run: brew test-bot --only-setup
 
-      - run: brew test-bot --only-tap-syntax
+      - run: brew test-bot --only-tap-syntax --tap="$GITHUB_REPOSITORY" --skip-online-checks
 
-      - run: brew test-bot --only-formulae
+      - run: brew test-bot --only-formulae --tap="$GITHUB_REPOSITORY"
         if: github.event_name == 'pull_request'
 
       - name: Upload bottles as artifact

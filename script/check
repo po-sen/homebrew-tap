@@ -8,8 +8,11 @@ trap cleanup EXIT
 
 ruby -e 'require "yaml"; %w[config/tracked-packages.yml data/upstream-versions.yml].each { |path| YAML.load_file(path) if File.exist?(path) }'
 ruby -c lib/version_tracker.rb
+ruby -c script/check-versioned-formulae
+ruby -c script/extract-minor-formulae
 ruby -c script/tracked-versions
 ruby -c script/update-version-catalog
+script/check-versioned-formulae
 
 if command -v pre-commit >/dev/null 2>&1; then
   pre-commit run --all-files
@@ -18,7 +21,8 @@ else
 fi
 
 if command -v brew >/dev/null 2>&1; then
-  brew test-bot --only-tap-syntax
+  tap="$(ruby -ryaml -e 'puts YAML.load_file("config/tracked-packages.yml").fetch("tap")')"
+  brew test-bot --only-tap-syntax --tap="$tap" --skip-online-checks
 else
   echo "brew is not installed; skipping Homebrew tap syntax check"
 fi

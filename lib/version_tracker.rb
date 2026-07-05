@@ -24,6 +24,16 @@ module VersionTracker
     load_config.fetch("packages")
   end
 
+  def load_catalog
+    return {} unless File.exist?(CATALOG_PATH)
+
+    YAML.load_file(CATALOG_PATH)
+  end
+
+  def catalog_packages
+    load_catalog.fetch("packages", {})
+  end
+
   def present_string?(value)
     value.is_a?(String) && !value.empty?
   end
@@ -107,6 +117,18 @@ module VersionTracker
     )
   end
 
+  def minor_latest_versions(versions)
+    versions.group_by { |version| version.split(".").first(2).join(".") }
+            .map { |_minor, minor_versions| minor_versions.first }
+  end
+
+  def minor_latest_versions_for(package_name, package)
+    catalog_versions = catalog_packages.dig(package_name, "minor_latest_versions")
+    return catalog_versions if catalog_versions.is_a?(Array) && !catalog_versions.empty?
+
+    minor_latest_versions(versions_for(package))
+  end
+
   def catalog
     tracked_packages = packages
 
@@ -119,12 +141,13 @@ module VersionTracker
         versions = versions_for(package)
 
         result[package_name] = {
-          "upstream"        => upstream.fetch("github"),
-          "latest"          => versions.first,
-          "version_count"   => versions.length,
-          "primary_formula" => formulae.fetch("primary"),
-          "pinned_formulae" => formulae.fetch("pinned", []),
-          "versions"        => versions,
+          "upstream"              => upstream.fetch("github"),
+          "latest"                => versions.first,
+          "version_count"         => versions.length,
+          "minor_latest_versions" => minor_latest_versions(versions),
+          "primary_formula"       => formulae.fetch("primary"),
+          "pinned_formulae"       => formulae.fetch("pinned", []),
+          "versions"              => versions,
         }
       end,
     }

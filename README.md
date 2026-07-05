@@ -33,6 +33,8 @@ Useful maintenance commands:
 
 ```sh
 script/tracked-versions
+script/check-versioned-formulae
+script/extract-minor-formulae
 script/update-version-catalog
 script/livecheck
 script/check

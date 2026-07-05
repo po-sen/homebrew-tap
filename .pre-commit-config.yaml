@@ -18,6 +18,27 @@ repos:
         pass_filenames: false
         files: ^script/tracked-versions$
 
+      - id: validate-extract-minor-formulae-script
+        name: validate extract minor formulae script
+        entry: ruby -c script/extract-minor-formulae
+        language: system
+        pass_filenames: false
+        files: ^script/extract-minor-formulae$
+
+      - id: validate-versioned-formulae-script
+        name: validate versioned formulae script
+        entry: ruby -c script/check-versioned-formulae
+        language: system
+        pass_filenames: false
+        files: ^script/check-versioned-formulae$
+
+      - id: check-versioned-formulae
+        name: check versioned formulae
+        entry: script/check-versioned-formulae
+        language: system
+        pass_filenames: false
+        files: ^(Formula/.*@.*\.rb|config/tracked-packages\.yml|data/upstream-versions\.yml|script/check-versioned-formulae)$
+
       - id: validate-update-version-catalog-script
         name: validate update version catalog script
         entry: ruby -c script/update-version-catalog

@@ -1,0 +1,50 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "set"
+require "yaml"
+
+require_relative "../lib/version_tracker"
+
+catalog = YAML.load_file(VersionTracker::CATALOG_PATH)
+formula_dir = File.join(VersionTracker::ROOT, "Formula")
+
+expected_formulae = Set.new
+tracked_formulae = Set.new
+
+catalog.fetch("packages").each_value do |package|
+  formula_name = package.fetch("primary_formula")
+  tracked_formulae << formula_name
+
+  package.fetch("minor_latest_versions").each do |version|
+    expected_formulae << "#{formula_name}@#{version}"
+  end
+end
+
+actual_formulae = tracked_formulae.each_with_object(Set.new) do |formula_name, result|
+  Dir[File.join(formula_dir, "#{formula_name}@*.rb")].each do |path|
+    result << File.basename(path, ".rb")
+  end
+end
+
+missing_formulae = expected_formulae - actual_formulae
+unexpected_formulae = actual_formulae - expected_formulae
+
+if missing_formulae.empty? && unexpected_formulae.empty?
+  puts "Versioned formulae match catalog minor-latest versions"
+  exit 0
+end
+
+warn "Versioned formulae do not match catalog minor-latest versions"
+
+unless missing_formulae.empty?
+  warn "Missing formulae:"
+  missing_formulae.sort.each { |formula| warn "  - #{formula}" }
+end
+
+unless unexpected_formulae.empty?
+  warn "Unexpected formulae:"
+  unexpected_formulae.sort.each { |formula| warn "  - #{formula}" }
+end
+
+exit 1

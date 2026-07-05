@@ -1,8 +1,8 @@
-class AsdfAT0170 < Formula
+class AsdfAT0167 < Formula
   desc "Extendable version manager with support for Ruby, Node.js, Erlang & more"
   homepage "https://asdf-vm.com/"
-  url "https://github.com/asdf-vm/asdf/archive/refs/tags/v0.17.0.tar.gz"
-  sha256 "47446cd6007b743ee207541fa8ebcddaae2c988f4cbd9dd845a2a7806d5d2f90"
+  url "https://github.com/asdf-vm/asdf/archive/refs/tags/v0.16.7.tar.gz"
+  sha256 "095b95ec198b53a5240b41475e7dc423a055e57ee3490e325b8af11f22f03bd8"
   license "MIT"
   head "https://github.com/asdf-vm/asdf.git", branch: "master"
 
@@ -12,7 +12,6 @@ class AsdfAT0170 < Formula
   end
 
   depends_on "go" => :build
-  depends_on "git"
 
   def install
     # fix https://github.com/asdf-vm/asdf/issues/1992

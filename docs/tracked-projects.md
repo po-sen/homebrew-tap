@@ -7,17 +7,18 @@ This tap is the install and version-tracking surface for tools that should be qu
 - `config/tracked-packages.yml` is the source of truth for upstream repositories, tag matching, and formula policy.
 - `data/upstream-versions.yml` records every matching upstream version currently known to the tap.
 - `Formula/<name>.rb` is the primary formula for the default version installed by `brew install <name>`.
-- `Formula/<name>@<version>.rb` is reserved for versions that must remain directly installable.
+- `Formula/<name>@<version>.rb` keeps the latest patch release for each upstream minor version.
 - Upstream history is tracked from GitHub tags and persisted in the catalog. The tap does not create a formula for every historical tag by default.
+- `script/check-versioned-formulae` verifies that versioned formulae match the catalog's minor-latest versions.
 
 This keeps the repo scalable: tracking every upstream version is cheap, while maintaining installable formulae stays intentional.
 
 ## Current Packages
 
-| Package | Upstream | Primary formula | Pinned formulae |
+| Package | Upstream | Primary formula | Versioned formulae |
 | --- | --- | --- | --- |
-| asdf | `asdf-vm/asdf` | `asdf` | `asdf@0.17.0` |
-| Neovim | `neovim/neovim` | `neovim` | none |
+| asdf | `asdf-vm/asdf` | `asdf` | Latest patch for each minor |
+| Neovim | `neovim/neovim` | `neovim` | Latest patch for each minor |
 
 ## Common Commands
 
@@ -37,6 +38,18 @@ Regenerate the persisted version catalog:
 
 ```sh
 script/update-version-catalog
+```
+
+Extract installable formulae for the latest patch release of each minor:
+
+```sh
+script/extract-minor-formulae
+```
+
+Verify versioned formulae match the catalog:
+
+```sh
+script/check-versioned-formulae
 ```
 
 Verify the catalog is current:
@@ -61,7 +74,7 @@ script/check
 
 1. Add the package to `config/tracked-packages.yml`.
 2. Add the primary formula under `Formula/<name>.rb`.
-3. Add versioned formulae only for versions that need to stay installable.
+3. Run `script/extract-minor-formulae <package>` to add minor-latest versioned formulae.
 4. Run `script/tracked-versions <package>` to confirm tag matching.
 5. Run `script/update-version-catalog`.
 6. Run `script/check`.

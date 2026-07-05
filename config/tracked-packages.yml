@@ -5,7 +5,7 @@ version_catalog: data/upstream-versions.yml
 defaults:
   version_source: github_tags
   release_policy: stable_semver_tags
-  formula_policy: primary_plus_pinned
+  formula_policy: primary_plus_minor_latest
 
 packages:
   asdf:
@@ -16,13 +16,12 @@ packages:
       tag_pattern: '^v?(?<version>\d+\.\d+\.\d+)$'
     formulae:
       primary: asdf
-      pinned:
-        - asdf@0.17.0
+      pinned: []
     policy:
       track_upstream_versions: all
       notes:
         - Keep the unversioned formula aligned with the default version that should be installed by `brew install asdf`.
-        - Keep versioned formulae only for versions that must remain directly installable.
+        - Keep versioned formulae for the latest patch release of each upstream minor version.
 
   neovim:
     display_name: Neovim
@@ -37,4 +36,4 @@ packages:
       track_upstream_versions: all
       notes:
         - Neovim formula updates must also review bundled tree-sitter parser resources.
-        - Add versioned formulae only for compatibility-critical versions.
+        - Keep versioned formulae for the latest patch release of each upstream minor version.
