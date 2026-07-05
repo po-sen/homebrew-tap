@@ -26,7 +26,7 @@ jobs:
         run: script/tracked-versions --limit 20
 
       - name: Set up Homebrew
-        uses: Homebrew/actions/setup-homebrew@master
+        uses: Homebrew/actions/setup-homebrew@main
 
       - name: Run Homebrew livecheck
         env:
