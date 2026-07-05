@@ -1,3 +1,4 @@
+# typed: strict
 # frozen_string_literal: true
 
 require "json"
@@ -6,11 +7,12 @@ require "rubygems"
 require "timeout"
 require "yaml"
 
+# Fetches and normalizes upstream release tags for packages tracked by this tap.
 module VersionTracker
   ROOT = File.expand_path("..", __dir__).freeze
   CONFIG_PATH = File.join(ROOT, "config", "tracked-packages.yml").freeze
   CATALOG_PATH = File.join(ROOT, "data", "upstream-versions.yml").freeze
-  USER_AGENT = "po-sen-homebrew-tap-version-tracker".freeze
+  USER_AGENT = "po-sen-homebrew-tap-version-tracker"
 
   module_function
 
